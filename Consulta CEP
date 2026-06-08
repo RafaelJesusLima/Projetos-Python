@@ -1,0 +1,63 @@
+import requests
+
+def buscar_cep(cep: str) -> dict | None:
+    cep = cep.replace("-", "").strip()
+
+    if not (len(cep) == 8 and cep.isdigit()):
+        print("❌ CEP inválido! Digite 8 números.")
+        return None
+
+    url = f"https://viacep.com.br/ws/{cep}/json/"
+
+    try:
+        resposta = requests.get(url, timeout=5)
+        resposta.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        print("❌ Sem conexão com a internet.")
+        return None
+    except requests.exceptions.Timeout:
+        print("❌ A requisição demorou demais. Tente novamente.")
+        return None
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ Erro HTTP: {e}")
+        return None
+
+    dados = resposta.json()
+
+    if "erro" in dados:
+        print("❌ CEP não encontrado.")
+        return None
+
+    return dados
+
+
+def exibir_resultado(dados: dict):
+    print("\n📍 Endereço encontrado:")
+    print(f"   CEP:        {dados.get('cep', '-')}")
+    print(f"   Logradouro: {dados.get('logradouro', '-')}")
+    print(f"   Bairro:     {dados.get('bairro', '-')}")
+    print(f"   Cidade:     {dados.get('localidade', '-')}")
+    print(f"   Estado:     {dados.get('uf', '-')}")
+    print(f"   DDD:        {dados.get('ddd', '-')}")
+
+
+def main():
+    print("=" * 40)
+    print("      🔍 VERIFICADOR DE CEP")
+    print("=" * 40)
+
+    while True:
+        cep = input("\nDigite o CEP (ou 'sair' para encerrar): ").strip()
+
+        if cep.lower() == "sair":
+            print("👋 Até mais!")
+            break
+
+        dados = buscar_cep(cep)
+
+        if dados:
+            exibir_resultado(dados)
+
+
+if __name__ == "__main__":
+    main()
